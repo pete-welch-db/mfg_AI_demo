@@ -24,7 +24,7 @@ include:
   - resources/**/*.yml
 
 workspace:
-  root_path: /Workspace/Shared/.bundle/${bundle.name}
+  root_path: /Workspace/Users/pete.welch@databricks.com/mfg_AI_demo
 
 # Sync notebooks, pipelines, and app to workspace on deploy
 sync:
@@ -37,3 +37,6 @@ targets:
   dev:
     mode: development
     default: true
+    # Warehouse ID for dashboard and orchestration (edit here or in config/dev.yaml)
+    variables:
+      warehouse_id: "148ccb90800933a1"

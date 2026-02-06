@@ -2,7 +2,7 @@
 # Deploy the bundle and run the full orchestration job (data → gold → ML → UC metrics → alerts → dashboard refresh).
 # Usage: ./scripts/deploy_and_run.sh [target]
 # Example: ./scripts/deploy_and_run.sh dev
-# Requires: databricks CLI logged in, var.warehouse_id set in bundle for dashboard refresh.
+# Requires: databricks CLI logged in. warehouse_id is read from bundle config (targets.dev.variables in databricks.yml).
 
 set -e
 TARGET="${1:-dev}"
