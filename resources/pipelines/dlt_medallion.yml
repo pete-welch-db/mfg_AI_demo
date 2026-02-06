@@ -1,12 +1,14 @@
 # DLT pipeline: bronze -> silver -> gold (pipelines/dlt_medallion.py).
 # Uses serverless compute (no clusters block); requires Unity Catalog.
+# root_path = pipeline root folder (UI + sys.path); library = workspace path to source.
 resources:
   pipelines:
     mfg_demo_dlt_medallion:
       name: mfg_demo_dlt_medallion
+      root_path: ${workspace.root_path}/pipelines
       configuration:
         pipeline.catalog: "${var.catalog}"
         pipeline.schema: "${var.schema}"
       libraries:
-        - notebook:
-            path: ${workspace.file_path}/pipelines/dlt_medallion
+        - glob:
+            include: ${workspace.root_path}/pipelines/dlt_medallion.py
