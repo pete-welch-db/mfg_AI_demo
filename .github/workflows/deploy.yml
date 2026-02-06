@@ -70,7 +70,7 @@ jobs:
 
       # ── Deploy bundle ───────────────────────────────────────────────────────
       - name: Deploy bundle
-        run: databricks bundle deploy -t dev
+        run: databricks bundle deploy -t dev --force
 
       # ── Future additions (uncomment as needed) ─────────────────────────────
       # - name: Run orchestration job

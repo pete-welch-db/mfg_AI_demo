@@ -71,7 +71,7 @@ fi
 # ── 3. Bundle deploy ─────────────────────────────────────────────────────────
 echo ""
 echo "=== 3. Bundle deploy (target=${TARGET}) ==="
-databricks bundle deploy -t "$TARGET"
+databricks bundle deploy -t "$TARGET" --force
 
 # ── 4. (Optional) Run orchestration job ──────────────────────────────────────
 if $RUN_JOB; then

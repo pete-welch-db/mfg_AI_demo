@@ -18,7 +18,7 @@ databricks bundle validate -t "$TARGET"
 
 echo ""
 echo "=== 2. Deploy bundle (notebooks, pipelines, jobs, dashboard, app to workspace) ==="
-databricks bundle deploy -t "$TARGET"
+databricks bundle deploy -t "$TARGET" --force
 
 echo ""
 echo "=== 3. Run orchestration job (data → gold → ML → UC metrics → alerts → dashboard refresh) ==="

@@ -8,7 +8,7 @@ set -e
 TARGET="${1:-dev}"
 
 echo "Deploying bundle (target=${TARGET})..."
-databricks bundle deploy -t "$TARGET"
+databricks bundle deploy -t "$TARGET" --force
 
 echo "Running orchestration job mfg_demo_orchestration..."
 databricks bundle run -t "$TARGET" mfg_demo_orchestration
