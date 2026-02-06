@@ -1,0 +1,81 @@
+# Deploy Databricks Asset Bundle on push to main.
+#
+# Required GitHub Secrets (Settings > Secrets and variables > Actions):
+#   DATABRICKS_HOST  – workspace URL, e.g. https://adb-984752964297111.11.azuredatabricks.net
+#   DATABRICKS_TOKEN – personal access token or service principal token
+#
+# The workflow:
+#   1. Validates the bundle config
+#   2. Syncs the workspace Git folder (Repos) to the pushed commit
+#   3. Deploys the bundle (jobs, pipelines, dashboard, notebooks)
+
+name: Deploy to Databricks
+
+on:
+  push:
+    branches: [main]
+
+  # Allow manual trigger from the Actions tab
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Validate & Deploy
+    runs-on: ubuntu-latest
+
+    env:
+      DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+      DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+
+    steps:
+      # ── Checkout ────────────────────────────────────────────────────────────
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # ── Install Databricks CLI ──────────────────────────────────────────────
+      - name: Install Databricks CLI
+        uses: databricks/setup-cli@main
+
+      # ── Validate bundle ─────────────────────────────────────────────────────
+      - name: Validate bundle
+        run: databricks bundle validate -t dev
+
+      # ── Sync workspace Git folder ──────────────────────────────────────────
+      - name: Sync workspace Git folder
+        run: |
+          WORKSPACE_REPO_PATH="/Workspace/Users/pete.welch@databricks.com/mfg_AI_demo"
+
+          REPO_ID=$(databricks repos list --output json 2>/dev/null \
+            | python3 -c "
+          import sys, json
+          data = json.load(sys.stdin)
+          repos = data.get('repos', data) if isinstance(data, dict) else data
+          for r in (repos if isinstance(repos, list) else []):
+              p = r.get('path', '')
+              if p.rstrip('/') == '$WORKSPACE_REPO_PATH'.rstrip('/'):
+                  print(r['id'])
+                  sys.exit(0)
+          sys.exit(1)
+          " 2>/dev/null) || true
+
+          if [[ -n "$REPO_ID" ]]; then
+            echo "Updating Repo $REPO_ID to branch main ..."
+            databricks repos update "$REPO_ID" --branch main
+          else
+            echo "::warning::Could not resolve Databricks Repo at $WORKSPACE_REPO_PATH. Skipping repos sync."
+          fi
+
+      # ── Deploy bundle ───────────────────────────────────────────────────────
+      - name: Deploy bundle
+        run: databricks bundle deploy -t dev
+
+      # ── Future additions (uncomment as needed) ─────────────────────────────
+      # - name: Run orchestration job
+      #   run: databricks bundle run -t dev mfg_demo_orchestration
+      #
+      # - name: Deploy to prod (on release tags)
+      #   if: startsWith(github.ref, 'refs/tags/')
+      #   run: databricks bundle deploy -t prod

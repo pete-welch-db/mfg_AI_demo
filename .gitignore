@@ -203,6 +203,9 @@ cython_debug/
 .cursorignore
 .cursorindexingignore
 
+# Databricks Asset Bundles (local state/cache)
+.databricks/
+
 # Marimo
 marimo/_static/
 marimo/_lsp/

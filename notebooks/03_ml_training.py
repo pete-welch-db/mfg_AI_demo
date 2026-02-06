@@ -92,7 +92,9 @@ with mlflow.start_run():
     mlflow.log_param("feature_cols", feature_cols)
     mlflow.log_metric("accuracy", accuracy_score(y_test, pred))
     mlflow.log_metric("roc_auc", roc_auc_score(y_test, proba))
-    mlflow.sklearn.log_model(clf, "model", registered_model_name=model_name)
+    # input_example auto-infers the model signature (required for UC model registry)
+    # input_example auto-infers the model signature (required for UC model registry)
+    mlflow.sklearn.log_model(clf, name="model", registered_model_name=model_name, input_example=X_train.head(5))
     run_id = mlflow.active_run().info.run_id
 
 # COMMAND ----------
