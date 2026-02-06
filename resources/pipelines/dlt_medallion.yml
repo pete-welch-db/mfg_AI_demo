@@ -1,4 +1,5 @@
-# DLT pipeline: bronze -> silver -> gold (pipelines/dlt_medallion.py)
+# DLT pipeline: bronze -> silver -> gold (pipelines/dlt_medallion.py).
+# Uses serverless compute (no clusters block); requires Unity Catalog.
 resources:
   pipelines:
     mfg_demo_dlt_medallion:
@@ -9,8 +10,3 @@ resources:
       libraries:
         - notebook:
             path: ${workspace.file_path}/pipelines/dlt_medallion
-      clusters:
-        - label: default
-          num_workers: 1
-          node_type_id: "Standard_DS3_v2"
-          spark_version: "14.3.x-scala2.12"
