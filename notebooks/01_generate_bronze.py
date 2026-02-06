@@ -149,13 +149,13 @@ def add_ingestion_metadata(df):
 n_events = 5000
 rows = []
 for _ in range(n_events):
-    plant_id = np.random.choice(plant_ids)
+    plant_id = str(np.random.choice(plant_ids))
     wcs = wc_by_plant.get(plant_id, plant_ids)
-    wc_id = np.random.choice(wcs) if wcs else plant_ids[0]
-    product_id = np.random.choice(product_ids)
+    wc_id = str(np.random.choice(wcs)) if wcs else str(plant_ids[0])
+    product_id = str(np.random.choice(product_ids))
     d = np.random.choice(dates)
     event_ts = datetime.combine(d, time.min) if isinstance(d, date) and not isinstance(d, datetime) else (d if isinstance(d, datetime) else datetime(2024, 1, 1))
-    state = np.random.choice(["running", "down"], p=[0.85, 0.15])
+    state = str(np.random.choice(["running", "down"], p=[0.85, 0.15]))
     duration_min = int(np.random.exponential(30)) if state == "down" else int(np.random.exponential(120))
     throughput_qty = int(np.random.poisson(50)) if state == "running" else 0
     rows.append((str(uuid.uuid4()), plant_id, wc_id, product_id, d, event_ts, state, duration_min, throughput_qty))
@@ -172,13 +172,13 @@ n_orders = 3000
 rows = []
 for i in range(n_orders):
     order_id = f"ORD{i:06d}"
-    plant_id = np.random.choice(plant_ids)
-    product_id = np.random.choice(product_ids)
-    customer_id = np.random.choice(customer_ids)
+    plant_id = str(np.random.choice(plant_ids))
+    product_id = str(np.random.choice(product_ids))
+    customer_id = str(np.random.choice(customer_ids))
     d = np.random.choice(dates)
     order_qty = int(np.random.lognormal(6, 1))
     planned_qty = order_qty + int(np.random.normal(0, 10))
-    status = np.random.choice(["open", "released", "closed"], p=[0.2, 0.5, 0.3])
+    status = str(np.random.choice(["open", "released", "closed"], p=[0.2, 0.5, 0.3]))
     rows.append((order_id, plant_id, product_id, customer_id, d, order_qty, max(0, planned_qty), status))
 df_po = spark.createDataFrame(rows, ["order_id", "plant_id", "product_id", "customer_id", "date", "order_qty", "planned_qty", "status"])
 df_po = df_po.withColumn("date", F.col("date").cast(DateType()))
@@ -193,11 +193,11 @@ n_ship = 2500
 rows = []
 for i in range(n_ship):
     ship_id = f"SHIP{i:06d}"
-    plant_id = np.random.choice(plant_ids)
-    customer_id = np.random.choice(customer_ids)
-    carrier_id = np.random.choice(carrier_ids)
-    supplier_id = np.random.choice(supplier_ids)
-    product_id = np.random.choice(product_ids)
+    plant_id = str(np.random.choice(plant_ids))
+    customer_id = str(np.random.choice(customer_ids))
+    carrier_id = str(np.random.choice(carrier_ids))
+    supplier_id = str(np.random.choice(supplier_ids))
+    product_id = str(np.random.choice(product_ids))
     d = np.random.choice(dates)
     promised = d + timedelta(days=int(np.random.uniform(3, 14)))
     late = np.random.random() < 0.15
@@ -205,7 +205,7 @@ for i in range(n_ship):
     transit_days = (delivered - d).days if delivered else None
     on_time = 1 if (not late and delivered and delivered <= promised) else 0
     qty = int(np.random.lognormal(5, 1))
-    rows.append((ship_id, plant_id, customer_id, carrier_id, supplier_id, product_id, d, promised, delivered, qty, transit_days, on_time))
+    rows.append((ship_id, plant_id, customer_id, carrier_id, supplier_id, product_id, d, promised, delivered, qty, int(transit_days) if transit_days is not None else None, on_time))
 df_sh = spark.createDataFrame(rows, ["shipment_id", "plant_id", "customer_id", "carrier_id", "supplier_id", "product_id", "date", "promised_date", "delivered_date", "qty", "transit_days", "on_time"])
 df_sh = df_sh.withColumn("date", F.col("date").cast(DateType())).withColumn("promised_date", F.col("promised_date").cast(DateType())).withColumn("delivered_date", F.col("delivered_date").cast(DateType()))
 df_sh = add_ingestion_metadata(df_sh)
@@ -219,9 +219,9 @@ n_mat = 2000
 rows = []
 for i in range(n_mat):
     rec_id = str(uuid.uuid4())
-    plant_id = np.random.choice(plant_ids)
-    supplier_id = np.random.choice(supplier_ids)
-    product_id = np.random.choice(product_ids)
+    plant_id = str(np.random.choice(plant_ids))
+    supplier_id = str(np.random.choice(supplier_ids))
+    product_id = str(np.random.choice(product_ids))
     d = np.random.choice(dates)
     asn_qty = int(np.random.lognormal(6, 1))
     received_qty = int(asn_qty * np.random.uniform(0.7, 1.0))
@@ -241,9 +241,9 @@ n_fc = 2500
 rows = []
 for i in range(n_fc):
     fc_id = str(uuid.uuid4())
-    plant_id = np.random.choice(plant_ids)
-    product_id = np.random.choice(product_ids)
-    customer_id = np.random.choice(customer_ids)
+    plant_id = str(np.random.choice(plant_ids))
+    product_id = str(np.random.choice(product_ids))
+    customer_id = str(np.random.choice(customer_ids))
     d = np.random.choice(dates)
     demand_qty = int(np.random.lognormal(6, 1))
     capacity_hrs = float(np.random.uniform(100, 500))
@@ -262,13 +262,13 @@ n_pnl = 3000
 rows = []
 for i in range(n_pnl):
     rec_id = str(uuid.uuid4())
-    plant_id = np.random.choice(plant_ids)
-    product_id = np.random.choice(product_ids)
-    customer_id = np.random.choice(customer_ids)
+    plant_id = str(np.random.choice(plant_ids))
+    product_id = str(np.random.choice(product_ids))
+    customer_id = str(np.random.choice(customer_ids))
     d = np.random.choice(dates)
     revenue = float(np.random.lognormal(12, 1))
-    cost = revenue * np.random.uniform(0.85, 0.98)
-    margin_pct = (revenue - cost) / revenue * 100 if revenue else 0
+    cost = float(revenue * np.random.uniform(0.85, 0.98))
+    margin_pct = (revenue - cost) / revenue * 100 if revenue else 0.0
     rows.append((rec_id, plant_id, product_id, customer_id, d, round(revenue, 2), round(cost, 2), round(margin_pct, 2)))
 df_pnl = spark.createDataFrame(rows, ["record_id", "plant_id", "product_id", "customer_id", "date", "revenue", "cost", "margin_pct"])
 df_pnl = df_pnl.withColumn("date", F.col("date").cast(DateType()))
