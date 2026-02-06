@@ -102,12 +102,12 @@ def gold_plant_oee():
     events = dlt.read("silver_machine_events")
     total = events.groupBy("plant_id", "work_center_id", "product_id", "date").agg(
         F.sum("duration_min").alias("total_min"),
-        F.sum(F.when(F.col("state") == "down", 1).otherwise(0)).alias("downtime_events"),
-        F.sum(F.when(F.col("state") == "down", F.col("duration_min")).otherwise(0)).alias("downtime_min"),
+        F.sum(F.when(F.col("state") == "down", F.lit(1)).otherwise(F.lit(0))).alias("downtime_events"),
+        F.sum(F.when(F.col("state") == "down", F.col("duration_min")).otherwise(F.lit(0))).alias("downtime_min"),
         F.sum("throughput_qty").alias("throughput_qty"),
         F.count("*").alias("event_count"),
     )
-    total = total.withColumn("availability_pct", F.least(100.0, F.greatest(0.0, 100.0 - 100.0 * F.col("downtime_min") / F.greatest(F.col("total_min"), 1))))
+    total = total.withColumn("availability_pct", F.least(F.lit(100.0), F.greatest(F.lit(0.0), F.lit(100.0) - F.lit(100.0) * F.col("downtime_min") / F.greatest(F.col("total_min"), F.lit(1)))))
     total = total.withColumn("oee_pct", F.col("availability_pct"))
     return total.withColumn("week", F.weekofyear(F.col("date")))
 
@@ -124,7 +124,7 @@ def gold_on_time_delivery():
         F.count("*").alias("total_shipments"),
         F.sum("on_time").alias("on_time_count"),
     )
-    return agg.withColumn("on_time_pct", F.when(F.col("total_shipments") > 0, 100.0 * F.col("on_time_count") / F.col("total_shipments")).otherwise(0.0))
+    return agg.withColumn("on_time_pct", F.when(F.col("total_shipments") > F.lit(0), F.lit(100.0) * F.col("on_time_count") / F.col("total_shipments")).otherwise(F.lit(0.0)))
 
 @dlt.table(name="gold_plant_margin", comment="Operating margin by plant, product, customer, period")
 def gold_plant_margin():
@@ -152,4 +152,4 @@ def gold_capacity_utilization():
         F.sum("demand_qty").alias("demand_qty"),
         F.sum("capacity_hrs").alias("capacity_hrs"),
         F.sum("planned_hrs").alias("planned_hrs"),
-    ).withColumn("utilization_pct", F.when(F.col("capacity_hrs") > 0, 100.0 * F.col("planned_hrs") / F.col("capacity_hrs")).otherwise(0.0))
+    ).withColumn("utilization_pct", F.when(F.col("capacity_hrs") > F.lit(0), F.lit(100.0) * F.col("planned_hrs") / F.col("capacity_hrs")).otherwise(F.lit(0.0)))

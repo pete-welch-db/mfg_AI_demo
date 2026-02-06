@@ -17,10 +17,10 @@ from pyspark.sql import functions as F
 events = spark.table(f"{catalog}.{schema}.silver_machine_events")
 total = events.groupBy("plant_id", "work_center_id", "product_id", "date").agg(
     F.sum("duration_min").alias("total_min"),
-    F.sum(F.when(F.col("state") == "down", F.col("duration_min")).otherwise(0)).alias("downtime_min"),
+    F.sum(F.when(F.col("state") == "down", F.col("duration_min")).otherwise(F.lit(0))).alias("downtime_min"),
     F.sum("throughput_qty").alias("throughput_qty"),
 )
-total = total.withColumn("availability_pct", F.least(100.0, F.greatest(0.0, 100.0 - 100.0 * F.col("downtime_min") / F.greatest(F.col("total_min"), 1))))
+total = total.withColumn("availability_pct", F.least(F.lit(100.0), F.greatest(F.lit(0.0), F.lit(100.0) - F.lit(100.0) * F.col("downtime_min") / F.greatest(F.col("total_min"), F.lit(1)))))
 total = total.withColumn("oee_pct", F.col("availability_pct")).withColumn("week", F.weekofyear(F.col("date")))
 total.write.format("delta").mode("overwrite").saveAsTable(f"{catalog}.{schema}.gold_plant_oee")
 apply_table_metadata(catalog, schema, "gold_plant_oee", "OEE and unplanned downtime by plant, work center, product, date; product enables program filter.",
@@ -40,7 +40,7 @@ agg = ship_with_family.groupBy("plant_id", "customer_id", "product_family", "dat
     F.count("*").alias("total_shipments"),
     F.sum("on_time").alias("on_time_count"),
 )
-agg = agg.withColumn("on_time_pct", F.when(F.col("total_shipments") > 0, 100.0 * F.col("on_time_count") / F.col("total_shipments")).otherwise(0.0))
+agg = agg.withColumn("on_time_pct", F.when(F.col("total_shipments") > F.lit(0), F.lit(100.0) * F.col("on_time_count") / F.col("total_shipments")).otherwise(F.lit(0.0)))
 agg.write.format("delta").mode("overwrite").saveAsTable(f"{catalog}.{schema}.gold_on_time_delivery")
 apply_table_metadata(catalog, schema, "gold_on_time_delivery", "On-time delivery % by plant, customer, product family, date.",
     {"plant_id": "Plant", "customer_id": "Customer", "product_family": "Product family", "date": "Date", "total_shipments": "Total shipment count", "on_time_count": "On-time shipment count", "on_time_pct": "On-time delivery percentage"})
@@ -81,7 +81,7 @@ cap = fc.groupBy("plant_id", "product_id", "date").agg(
     F.sum("capacity_hrs").alias("capacity_hrs"),
     F.sum("planned_hrs").alias("planned_hrs"),
 )
-cap = cap.withColumn("utilization_pct", F.when(F.col("capacity_hrs") > 0, 100.0 * F.col("planned_hrs") / F.col("capacity_hrs")).otherwise(0.0))
+cap = cap.withColumn("utilization_pct", F.when(F.col("capacity_hrs") > F.lit(0), F.lit(100.0) * F.col("planned_hrs") / F.col("capacity_hrs")).otherwise(F.lit(0.0)))
 cap.write.format("delta").mode("overwrite").saveAsTable(f"{catalog}.{schema}.gold_capacity_utilization")
 apply_table_metadata(catalog, schema, "gold_capacity_utilization", "Capacity vs plan by plant, product, date; utilization %.",
     {"plant_id": "Plant", "product_id": "Product", "date": "Date", "demand_qty": "Demand quantity", "capacity_hrs": "Capacity hours", "planned_hrs": "Planned hours", "utilization_pct": "Utilization percentage"})

@@ -105,12 +105,14 @@ train_df["prediction_late"] = (train_df["probability_late"] >= 0.5).astype(int)
 
 # COMMAND ----------
 
-# Write predictions to Delta
+# Write predictions to Delta (explicit types for downstream metric views and Genie)
+from pyspark.sql.types import DateType, TimestampType
 out = train_df[["shipment_id", "plant_id", "customer_id", "date", "prediction_late", "probability_late"]].copy()
 out["model_version"] = "1"
 out["scored_at"] = pd.Timestamp.utcnow()
 out.columns = ["shipment_id", "plant_id", "customer_id", "date", "prediction", "probability", "model_version", "scored_at"]
 spark_out = spark.createDataFrame(out)
+spark_out = spark_out.withColumn("date", F.col("date").cast(DateType())).withColumn("scored_at", F.col("scored_at").cast(TimestampType()))
 spark_out.write.format("delta").mode("overwrite").saveAsTable(f"{catalog}.{schema}.ml_delivery_risk_predictions")
 apply_table_metadata(catalog, schema, "ml_delivery_risk_predictions", "Delivery risk model predictions; probability and binary prediction of late delivery per shipment.",
     {"shipment_id": "Shipment identifier", "plant_id": "Plant", "customer_id": "Customer", "date": "Ship date", "prediction": "1 if predicted late, 0 otherwise", "probability": "Probability of late delivery", "model_version": "Model version used", "scored_at": "Scoring timestamp"})
