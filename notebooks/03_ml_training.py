@@ -112,6 +112,8 @@ out["scored_at"] = pd.Timestamp.utcnow()
 out.columns = ["shipment_id", "plant_id", "customer_id", "date", "prediction", "probability", "model_version", "scored_at"]
 spark_out = spark.createDataFrame(out)
 spark_out.write.format("delta").mode("overwrite").saveAsTable(f"{catalog}.{schema}.ml_delivery_risk_predictions")
+apply_table_metadata(catalog, schema, "ml_delivery_risk_predictions", "Delivery risk model predictions; probability and binary prediction of late delivery per shipment.",
+    {"shipment_id": "Shipment identifier", "plant_id": "Plant", "customer_id": "Customer", "date": "Ship date", "prediction": "1 if predicted late, 0 otherwise", "probability": "Probability of late delivery", "model_version": "Model version used", "scored_at": "Scoring timestamp"})
 
 # COMMAND ----------
 

@@ -43,6 +43,8 @@ plant_data = [
 ]
 df_plant = spark.createDataFrame(plant_data, ["plant_id", "plant_name", "region", "country"])
 df_plant.write.format("delta").mode("overwrite").saveAsTable(f"{catalog}.{schema}.silver_dim_plant")
+apply_table_metadata(catalog, schema, "silver_dim_plant", "North American manufacturing plants; used for plant-level KPIs and filters.",
+    {"plant_id": "Unique plant identifier", "plant_name": "Plant display name", "region": "Geographic region", "country": "Country code (USA, MEX, CAN)"})
 
 # COMMAND ----------
 
@@ -57,6 +59,8 @@ product_data = [
 ]
 df_product = spark.createDataFrame(product_data, ["product_id", "product_name", "product_family", "program_type"])
 df_product.write.format("delta").mode("overwrite").saveAsTable(f"{catalog}.{schema}.silver_dim_product")
+apply_table_metadata(catalog, schema, "silver_dim_product", "Product master; product_family and program_type drive EV/ADAS/Legacy filters.",
+    {"product_id": "Unique product identifier", "product_name": "Product display name", "product_family": "Product family (e.g. Electrification, Safety)", "program_type": "Program: EV, ADAS, or Other"})
 
 # COMMAND ----------
 
@@ -69,6 +73,8 @@ customer_data = [
 ]
 df_customer = spark.createDataFrame(customer_data, ["customer_id", "customer_name", "program_name"])
 df_customer.write.format("delta").mode("overwrite").saveAsTable(f"{catalog}.{schema}.silver_dim_customer")
+apply_table_metadata(catalog, schema, "silver_dim_customer", "OEM and program master; links orders and shipments to customers.",
+    {"customer_id": "Unique customer identifier", "customer_name": "OEM or customer name", "program_name": "Program name (e.g. EV Program Alpha)"})
 
 # COMMAND ----------
 
@@ -80,6 +86,8 @@ supplier_data = [
 ]
 df_supplier = spark.createDataFrame(supplier_data, ["supplier_id", "supplier_name", "region"])
 df_supplier.write.format("delta").mode("overwrite").saveAsTable(f"{catalog}.{schema}.silver_dim_supplier")
+apply_table_metadata(catalog, schema, "silver_dim_supplier", "Supplier master; used for material availability and lead-time metrics.",
+    {"supplier_id": "Unique supplier identifier", "supplier_name": "Supplier name", "region": "Supplier region"})
 
 # COMMAND ----------
 
@@ -95,6 +103,8 @@ for i in range(days + 1):
 df_date = spark.createDataFrame(date_rows, ["date", "year", "quarter", "month", "week", "day_of_week", "is_weekend"])
 df_date = df_date.withColumn("date", F.col("date").cast(DateType()))
 df_date.write.format("delta").mode("overwrite").saveAsTable(f"{catalog}.{schema}.silver_dim_date")
+apply_table_metadata(catalog, schema, "silver_dim_date", "Calendar dimension for time-based reporting and filters.",
+    {"date": "Calendar date", "year": "Year", "quarter": "Quarter (1-4)", "month": "Month (1-12)", "week": "ISO week number", "day_of_week": "Day of week (1-7)", "is_weekend": "1 if weekend, 0 otherwise"})
 
 # COMMAND ----------
 
@@ -110,6 +120,8 @@ work_center_data = [
 ]
 df_wc = spark.createDataFrame(work_center_data, ["work_center_id", "plant_id", "line_name", "asset_type"])
 df_wc.write.format("delta").mode("overwrite").saveAsTable(f"{catalog}.{schema}.silver_dim_work_center")
+apply_table_metadata(catalog, schema, "silver_dim_work_center", "Work centers (lines) per plant; used for OEE and downtime by line.",
+    {"work_center_id": "Unique work center identifier", "plant_id": "Parent plant", "line_name": "Line display name", "asset_type": "Type (e.g. Assembly, Machining)"})
 
 # COMMAND ----------
 
@@ -121,6 +133,8 @@ carrier_data = [
 ]
 df_carrier = spark.createDataFrame(carrier_data, ["carrier_id", "carrier_name"])
 df_carrier.write.format("delta").mode("overwrite").saveAsTable(f"{catalog}.{schema}.silver_dim_carrier")
+apply_table_metadata(catalog, schema, "silver_dim_carrier", "Logistics carriers; used for shipment and delivery risk.",
+    {"carrier_id": "Unique carrier identifier", "carrier_name": "Carrier name"})
 
 # COMMAND ----------
 
@@ -163,6 +177,8 @@ df_me = spark.createDataFrame(rows, ["event_id", "plant_id", "work_center_id", "
 df_me = df_me.withColumn("date", F.col("date").cast(DateType())).withColumn("event_ts", F.col("event_ts").cast(TimestampType()))
 df_me = add_ingestion_metadata(df_me)
 df_me.write.format("delta").mode("overwrite").saveAsTable(f"{catalog}.{schema}.bronze_machine_events")
+apply_table_metadata(catalog, schema, "bronze_machine_events", "Raw machine/line events from MES or IoT; running/down state, duration, throughput.",
+    {"event_id": "Unique event identifier", "plant_id": "Plant", "work_center_id": "Work center or line", "product_id": "Product", "date": "Event date", "event_ts": "Event timestamp", "state": "running or down", "duration_min": "Duration in minutes", "throughput_qty": "Units produced when running", "_ingested_at": "Ingestion timestamp", "_source_batch_id": "Batch ID for lineage"})
 
 # COMMAND ----------
 
@@ -184,6 +200,8 @@ df_po = spark.createDataFrame(rows, ["order_id", "plant_id", "product_id", "cust
 df_po = df_po.withColumn("date", F.col("date").cast(DateType()))
 df_po = add_ingestion_metadata(df_po)
 df_po.write.format("delta").mode("overwrite").saveAsTable(f"{catalog}.{schema}.bronze_production_orders")
+apply_table_metadata(catalog, schema, "bronze_production_orders", "Production orders from ERP; order and planned quantities, status.",
+    {"order_id": "Unique order identifier", "plant_id": "Plant", "product_id": "Product", "customer_id": "Customer", "date": "Order date", "order_qty": "Ordered quantity", "planned_qty": "Planned quantity", "status": "open, released, or closed", "_ingested_at": "Ingestion timestamp", "_source_batch_id": "Batch ID for lineage"})
 
 # COMMAND ----------
 
@@ -210,6 +228,8 @@ df_sh = spark.createDataFrame(rows, ["shipment_id", "plant_id", "customer_id", "
 df_sh = df_sh.withColumn("date", F.col("date").cast(DateType())).withColumn("promised_date", F.col("promised_date").cast(DateType())).withColumn("delivered_date", F.col("delivered_date").cast(DateType()))
 df_sh = add_ingestion_metadata(df_sh)
 df_sh.write.format("delta").mode("overwrite").saveAsTable(f"{catalog}.{schema}.bronze_shipments")
+apply_table_metadata(catalog, schema, "bronze_shipments", "Shipments from logistics; promised/delivered dates, on-time flag, quantity.",
+    {"shipment_id": "Unique shipment identifier", "plant_id": "Plant", "customer_id": "Customer", "carrier_id": "Carrier", "supplier_id": "Supplier", "product_id": "Product", "date": "Ship date", "promised_date": "Promised delivery date", "delivered_date": "Actual delivery date", "qty": "Shipped quantity", "transit_days": "Days in transit", "on_time": "1 if on time, 0 if late", "_ingested_at": "Ingestion timestamp", "_source_batch_id": "Batch ID for lineage"})
 
 # COMMAND ----------
 
@@ -232,6 +252,8 @@ df_ma = spark.createDataFrame(rows, ["record_id", "plant_id", "supplier_id", "pr
 df_ma = df_ma.withColumn("date", F.col("date").cast(DateType()))
 df_ma = add_ingestion_metadata(df_ma)
 df_ma.write.format("delta").mode("overwrite").saveAsTable(f"{catalog}.{schema}.bronze_material_availability")
+apply_table_metadata(catalog, schema, "bronze_material_availability", "Material availability from ASN/EDI; asn vs received, lead time, availability flag.",
+    {"record_id": "Unique record identifier", "plant_id": "Plant", "supplier_id": "Supplier", "product_id": "Product", "date": "Record date", "asn_qty": "ASN quantity", "received_qty": "Received quantity", "lead_time_days": "Lead time in days", "available": "1 if available, 0 otherwise", "_ingested_at": "Ingestion timestamp", "_source_batch_id": "Batch ID for lineage"})
 
 # COMMAND ----------
 
@@ -253,6 +275,8 @@ df_pf = spark.createDataFrame(rows, ["forecast_id", "plant_id", "product_id", "c
 df_pf = df_pf.withColumn("date", F.col("date").cast(DateType()))
 df_pf = add_ingestion_metadata(df_pf)
 df_pf.write.format("delta").mode("overwrite").saveAsTable(f"{catalog}.{schema}.bronze_planner_forecasts")
+apply_table_metadata(catalog, schema, "bronze_planner_forecasts", "Demand and capacity forecasts from S&OP; demand_qty, capacity_hrs, planned_hrs.",
+    {"forecast_id": "Unique forecast identifier", "plant_id": "Plant", "product_id": "Product", "customer_id": "Customer", "date": "Forecast date", "demand_qty": "Demand quantity", "capacity_hrs": "Capacity in hours", "planned_hrs": "Planned hours", "_ingested_at": "Ingestion timestamp", "_source_batch_id": "Batch ID for lineage"})
 
 # COMMAND ----------
 
@@ -274,6 +298,8 @@ df_pnl = spark.createDataFrame(rows, ["record_id", "plant_id", "product_id", "cu
 df_pnl = df_pnl.withColumn("date", F.col("date").cast(DateType()))
 df_pnl = add_ingestion_metadata(df_pnl)
 df_pnl.write.format("delta").mode("overwrite").saveAsTable(f"{catalog}.{schema}.bronze_plant_pnl")
+apply_table_metadata(catalog, schema, "bronze_plant_pnl", "Plant P&L; revenue, cost, margin % by plant, product, customer, date.",
+    {"record_id": "Unique record identifier", "plant_id": "Plant", "product_id": "Product", "customer_id": "Customer", "date": "P&L date", "revenue": "Revenue", "cost": "Cost", "margin_pct": "Margin percentage", "_ingested_at": "Ingestion timestamp", "_source_batch_id": "Batch ID for lineage"})
 
 # COMMAND ----------
 

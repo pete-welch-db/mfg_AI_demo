@@ -23,6 +23,8 @@ total = events.groupBy("plant_id", "work_center_id", "product_id", "date").agg(
 total = total.withColumn("availability_pct", F.least(100.0, F.greatest(0.0, 100.0 - 100.0 * F.col("downtime_min") / F.greatest(F.col("total_min"), 1))))
 total = total.withColumn("oee_pct", F.col("availability_pct")).withColumn("week", F.weekofyear(F.col("date")))
 total.write.format("delta").mode("overwrite").saveAsTable(f"{catalog}.{schema}.gold_plant_oee")
+apply_table_metadata(catalog, schema, "gold_plant_oee", "OEE and unplanned downtime by plant, work center, product, date; product enables program filter.",
+    {"plant_id": "Plant", "work_center_id": "Work center", "product_id": "Product", "date": "Date", "total_min": "Total minutes", "downtime_min": "Unplanned downtime minutes", "throughput_qty": "Units produced", "availability_pct": "Availability %", "oee_pct": "OEE %", "week": "ISO week number"})
 
 # COMMAND ----------
 
@@ -40,6 +42,8 @@ agg = ship_with_family.groupBy("plant_id", "customer_id", "product_family", "dat
 )
 agg = agg.withColumn("on_time_pct", F.when(F.col("total_shipments") > 0, 100.0 * F.col("on_time_count") / F.col("total_shipments")).otherwise(0.0))
 agg.write.format("delta").mode("overwrite").saveAsTable(f"{catalog}.{schema}.gold_on_time_delivery")
+apply_table_metadata(catalog, schema, "gold_on_time_delivery", "On-time delivery % by plant, customer, product family, date.",
+    {"plant_id": "Plant", "customer_id": "Customer", "product_family": "Product family", "date": "Date", "total_shipments": "Total shipment count", "on_time_count": "On-time shipment count", "on_time_pct": "On-time delivery percentage"})
 
 # COMMAND ----------
 
@@ -51,6 +55,8 @@ margin = pnl.groupBy("plant_id", "product_id", "customer_id", "date").agg(
     F.avg("margin_pct").alias("margin_pct"),
 )
 margin.write.format("delta").mode("overwrite").saveAsTable(f"{catalog}.{schema}.gold_plant_margin")
+apply_table_metadata(catalog, schema, "gold_plant_margin", "Operating margin by plant, product, customer, date.",
+    {"plant_id": "Plant", "product_id": "Product", "customer_id": "Customer", "date": "Date", "revenue": "Total revenue", "cost": "Total cost", "margin_pct": "Average margin %"})
 
 # COMMAND ----------
 
@@ -63,6 +69,8 @@ inv = mat.groupBy("plant_id", "supplier_id", "date").agg(
     F.avg("available").alias("availability_pct"),
 )
 inv.write.format("delta").mode("overwrite").saveAsTable(f"{catalog}.{schema}.gold_inventory_lead_time")
+apply_table_metadata(catalog, schema, "gold_inventory_lead_time", "Inventory and lead-time reliability by plant, supplier, date.",
+    {"plant_id": "Plant", "supplier_id": "Supplier", "date": "Date", "asn_qty": "Total ASN quantity", "received_qty": "Total received quantity", "avg_lead_time_days": "Average lead time in days", "availability_pct": "Availability proportion"})
 
 # COMMAND ----------
 
@@ -75,6 +83,8 @@ cap = fc.groupBy("plant_id", "product_id", "date").agg(
 )
 cap = cap.withColumn("utilization_pct", F.when(F.col("capacity_hrs") > 0, 100.0 * F.col("planned_hrs") / F.col("capacity_hrs")).otherwise(0.0))
 cap.write.format("delta").mode("overwrite").saveAsTable(f"{catalog}.{schema}.gold_capacity_utilization")
+apply_table_metadata(catalog, schema, "gold_capacity_utilization", "Capacity vs plan by plant, product, date; utilization %.",
+    {"plant_id": "Plant", "product_id": "Product", "date": "Date", "demand_qty": "Demand quantity", "capacity_hrs": "Capacity hours", "planned_hrs": "Planned hours", "utilization_pct": "Utilization percentage"})
 
 # COMMAND ----------
 

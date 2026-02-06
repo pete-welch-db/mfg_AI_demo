@@ -62,6 +62,8 @@ from pyspark.sql import Row
 if alerts:
     rows = [Row(kpi=a["kpi"], threshold=a["threshold"], breach_count=a["breaches"], action_link=a["link"]) for a in alerts]
     spark.createDataFrame(rows).write.format("delta").mode("overwrite").saveAsTable(f"{catalog}.{schema}.alerts_kpi_breaches")
+    apply_table_metadata(catalog, schema, "alerts_kpi_breaches", "KPI breach alerts: margin < 8%, on-time < 95%, OEE < 75%; links to app and Genie for follow-up.",
+        {"kpi": "KPI name (margin, on_time_delivery, oee)", "threshold": "Threshold that was breached", "breach_count": "Number of breaches", "action_link": "Link to app or Genie for follow-up"})
     print("ALERTS:", alerts)
 else:
     print("No KPI breaches.")
