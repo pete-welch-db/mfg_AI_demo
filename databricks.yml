@@ -1,0 +1,39 @@
+# Databricks Asset Bundle: DENSO Manufacturing Operations Demo
+# Validate: databricks bundle validate
+# Deploy:   databricks bundle deploy --target dev
+# Deploy and run full pipeline (including dashboard refresh): ./scripts/deploy_and_run.sh dev
+
+bundle:
+  name: mfg_ai_demo
+
+variables:
+  catalog:
+    description: Unity Catalog name (override in target or CLI to use a different catalog)
+    default: welch
+  schema:
+    description: Schema for tables and pipelines (override in target or CLI to use a different schema)
+    default: denso_ai
+  warehouse_id:
+    description: SQL Warehouse ID for Genie/App
+    default: ""
+  app_name:
+    description: Human-friendly name for deployed app/resources
+    default: mfg-demo-operations
+
+include:
+  - resources/**/*.yml
+
+workspace:
+  root_path: /Workspace/Shared/.bundle/${bundle.name}
+
+# Sync notebooks, pipelines, and app to workspace on deploy
+sync:
+  include:
+    - notebooks/**
+    - pipelines/**
+    - app/**
+
+targets:
+  dev:
+    mode: development
+    default: true

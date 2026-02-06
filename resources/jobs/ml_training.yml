@@ -1,0 +1,22 @@
+# ML training job: train delivery_risk model, register in UC, score to ml_delivery_risk_predictions (plan §4).
+resources:
+  jobs:
+    mfg_demo_ml_training:
+      name: mfg_demo_ml_training
+      tasks:
+        - task_key: train_and_score
+          notebook_task:
+            notebook_path: ${workspace.file_path}/notebooks/03_ml_training
+            base_parameters:
+              catalog: "${var.catalog}"
+              schema: "${var.schema}"
+          job_cluster_key: job_cluster
+      job_clusters:
+        - job_cluster_key: job_cluster
+          new_cluster:
+            spark_version: "14.3.x-scala2.12"
+            node_type_id: "Standard_DS3_v2"
+            num_workers: 0
+            spark_env_vars:
+              DEMO_CATALOG: "${var.catalog}"
+              DEMO_SCHEMA: "${var.schema}"

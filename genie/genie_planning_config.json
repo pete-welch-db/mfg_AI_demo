@@ -1,0 +1,35 @@
+{
+  "title": "DENSO North America Planning",
+  "description": "S&OP and planning: demand forecasts, capacity plans, constrained build. Use with Operations space in the Supervisor for a single chat experience.",
+  "catalog": "welch",
+  "schema": "denso_ai",
+  "tables": [
+    "welch.denso_ai.gold_capacity_utilization",
+    "welch.denso_ai.mv_plant_margin",
+    "welch.denso_ai.silver_planner_forecasts",
+    "welch.denso_ai.silver_production_orders",
+    "welch.denso_ai.silver_dim_plant",
+    "welch.denso_ai.silver_dim_product",
+    "welch.denso_ai.silver_dim_customer",
+    "welch.denso_ai.silver_dim_date"
+  ],
+  "instructions": "## Role\nYou are the Planning / S&OP perspective for DENSO North America. Focus on demand forecasts, capacity planning, constrained build plans, and how they link to production orders and margin.\n\n## Margin KPI \u2013 use UC metric view\n- **mv_plant_margin**: use MEASURE(`Margin %`), MEASURE(Revenue), MEASURE(Cost). Join to dimensions for names.\n\n## Other tables\n- gold_capacity_utilization: utilization_pct, capacity_hrs, planned_hrs, demand_qty by plant/product/date.\n- silver_planner_forecasts: forecast_id, plant_id, product_id, customer_id, date, demand_qty, capacity_hrs, planned_hrs.\n- silver_production_orders: order_id, plant_id, product_id, customer_id, date, order_qty, planned_qty, status.\n- Dimensions: silver_dim_plant, silver_dim_product, silver_dim_customer, silver_dim_date (for names and filters).\n\n## Metrics\n- Capacity utilization = planned_hrs / capacity_hrs.\n- Use date for time filters; default last 90 days for current view.",
+  "sample_queries": [
+    {
+      "question": "What is our capacity utilization by plant this month?",
+      "sql": "SELECT plant_id, AVG(utilization_pct) AS util_pct FROM welch.denso_ai.gold_capacity_utilization WHERE date >= date_trunc('month', current_date())::date GROUP BY plant_id ORDER BY util_pct DESC"
+    },
+    {
+      "question": "What is our operating margin by plant this quarter?",
+      "sql": "SELECT g.plant_id, p.plant_name, AVG(MEASURE(`Margin %`)) AS avg_margin_pct FROM welch.denso_ai.mv_plant_margin g JOIN welch.denso_ai.silver_dim_plant p ON g.plant_id = p.plant_id WHERE g.date >= date_trunc('quarter', current_date())::date GROUP BY g.plant_id, p.plant_name ORDER BY avg_margin_pct DESC"
+    },
+    {
+      "question": "Show demand vs capacity by product for the next quarter",
+      "sql": "SELECT product_id, SUM(demand_qty) AS demand, SUM(capacity_hrs) AS capacity_hrs FROM welch.denso_ai.silver_planner_forecasts WHERE date >= date_trunc('quarter', current_date())::date GROUP BY product_id ORDER BY demand DESC LIMIT 10"
+    },
+    {
+      "question": "Which plants are over capacity?",
+      "sql": "SELECT plant_id, AVG(utilization_pct) AS util FROM welch.denso_ai.gold_capacity_utilization WHERE date >= date_sub(current_date(), 30) GROUP BY plant_id HAVING AVG(utilization_pct) > 100 ORDER BY util DESC"
+    }
+  ]
+}

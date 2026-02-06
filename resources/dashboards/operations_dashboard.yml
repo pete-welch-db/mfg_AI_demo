@@ -1,0 +1,8 @@
+# Optional: Lakeview dashboard for Operations Director (plan §7 resources/dashboards).
+# Dashboard JSON is at ../../dashboards/operations.lvdash.json (export from workspace or edit manually).
+resources:
+  dashboards:
+    mfg_demo_operations:
+      display_name: "DENSO Operations"
+      file_path: ../../dashboards/operations.lvdash.json
+      warehouse_id: ${var.warehouse_id}

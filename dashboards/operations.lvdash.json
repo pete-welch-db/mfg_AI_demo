@@ -1,0 +1,249 @@
+{
+  "datasets": [
+    {
+      "name": "kpi_snapshot",
+      "displayName": "KPI Snapshot (90d)",
+      "queryLines": [
+        "WITH oee AS (",
+        "  SELECT AVG(MEASURE(`OEE %`)) AS oee_pct FROM welch.denso_ai.mv_plant_oee WHERE date >= date_sub(current_date(), 90)",
+        "), ot AS (",
+        "  SELECT AVG(MEASURE(`On-time %`)) AS on_time_pct FROM welch.denso_ai.mv_on_time_delivery WHERE date >= date_sub(current_date(), 90)",
+        "), mgn AS (",
+        "  SELECT AVG(MEASURE(`Margin %`)) AS margin_pct FROM welch.denso_ai.mv_plant_margin WHERE date >= date_sub(current_date(), 90)",
+        "), risk AS (",
+        "  SELECT AVG(MEASURE(`Avg late probability`)) AS late_prob FROM welch.denso_ai.mv_delivery_risk WHERE date >= date_sub(current_date(), 90)",
+        ") SELECT oee.oee_pct, ot.on_time_pct, mgn.margin_pct, risk.late_prob FROM oee CROSS JOIN ot CROSS JOIN mgn CROSS JOIN risk"
+      ]
+    },
+    {
+      "name": "oee_by_plant",
+      "displayName": "OEE by Plant (90d)",
+      "queryLines": [
+        "SELECT plant_id, MEASURE(`OEE %`) AS oee_pct, MEASURE(`Downtime min`) AS downtime_min",
+        "FROM welch.denso_ai.mv_plant_oee WHERE date >= date_sub(current_date(), 90)",
+        "GROUP BY plant_id ORDER BY oee_pct LIMIT 15"
+      ]
+    },
+    {
+      "name": "on_time_by_plant",
+      "displayName": "On-time % by Plant (90d)",
+      "queryLines": [
+        "SELECT plant_id, MEASURE(`On-time %`) AS on_time_pct FROM welch.denso_ai.mv_on_time_delivery",
+        "WHERE date >= date_sub(current_date(), 90) GROUP BY plant_id ORDER BY on_time_pct LIMIT 15"
+      ]
+    },
+    {
+      "name": "margin_by_plant",
+      "displayName": "Margin % by Plant (90d)",
+      "queryLines": [
+        "SELECT plant_id, MEASURE(`Margin %`) AS margin_pct, MEASURE(Revenue) AS revenue",
+        "FROM welch.denso_ai.mv_plant_margin WHERE date >= date_sub(current_date(), 90)",
+        "GROUP BY plant_id ORDER BY margin_pct LIMIT 15"
+      ]
+    },
+    {
+      "name": "plant_list",
+      "displayName": "Plant List",
+      "queryLines": [
+        "SELECT DISTINCT plant_id FROM welch.denso_ai.mv_plant_oee ORDER BY plant_id"
+      ]
+    },
+    {
+      "name": "product_family_list",
+      "displayName": "Product Family List",
+      "queryLines": [
+        "SELECT DISTINCT product_family FROM welch.denso_ai.mv_on_time_delivery ORDER BY product_family"
+      ]
+    },
+    {
+      "name": "oee_trend",
+      "displayName": "OEE Trend (by date)",
+      "queryLines": [
+        "SELECT date, plant_id, MEASURE(`OEE %`) AS oee_pct FROM welch.denso_ai.mv_plant_oee",
+        "WHERE date >= date_sub(current_date(), 90) GROUP BY date, plant_id ORDER BY date"
+      ]
+    },
+    {
+      "name": "on_time_trend",
+      "displayName": "On-time Trend (by date)",
+      "queryLines": [
+        "SELECT date, plant_id, MEASURE(`On-time %`) AS on_time_pct FROM welch.denso_ai.mv_on_time_delivery",
+        "WHERE date >= date_sub(current_date(), 90) GROUP BY date, plant_id ORDER BY date"
+      ]
+    },
+    {
+      "name": "filtered_oee",
+      "displayName": "OEE (filtered)",
+      "queryLines": [
+        "SELECT plant_id, MEASURE(`OEE %`) AS oee_pct, MEASURE(`Downtime min`) AS downtime_min",
+        "FROM welch.denso_ai.mv_plant_oee WHERE date >= date_sub(current_date(), 90)"
+      ]
+    },
+    {
+      "name": "filtered_on_time",
+      "displayName": "On-time (filtered)",
+      "queryLines": [
+        "SELECT plant_id, customer_id, product_family, MEASURE(`On-time %`) AS on_time_pct",
+        "FROM welch.denso_ai.mv_on_time_delivery WHERE date >= date_sub(current_date(), 90)"
+      ]
+    },
+    {
+      "name": "filtered_margin",
+      "displayName": "Margin (filtered)",
+      "queryLines": [
+        "SELECT plant_id, MEASURE(`Margin %`) AS margin_pct, MEASURE(Revenue) AS revenue",
+        "FROM welch.denso_ai.mv_plant_margin WHERE date >= date_sub(current_date(), 90)"
+      ]
+    }
+  ],
+  "pages": [
+    {
+      "name": "Operations_Overview",
+      "displayName": "Operations Overview",
+      "layout": [
+        {
+          "widget": {
+            "name": "header",
+            "multilineTextboxSpec": {
+              "lines": ["# DENSO North America Operations | Key KPIs"]
+            }
+          },
+          "position": { "x": 0, "y": 0, "width": 8, "height": 1 }
+        },
+        {
+          "widget": {
+            "name": "plant_filter",
+            "queries": [{ "name": "main_query", "query": { "datasetName": "plant_list", "fields": [{ "name": "plant_id", "expression": "`plant_id`" }], "disaggregated": true }}],
+            "spec": {
+              "version": 2,
+              "widgetType": "filter-single-select",
+              "encodings": { "fields": [{ "fieldName": "plant_id", "displayName": "Plant" }] },
+              "frame": { "title": "Filter by Plant", "showTitle": true }
+            }
+          },
+          "position": { "x": 8, "y": 0, "width": 2, "height": 1 }
+        },
+        {
+          "widget": {
+            "name": "kpi_oee",
+            "queries": [{ "name": "main_query", "query": { "datasetName": "kpi_snapshot", "fields": [{ "name": "oee_pct", "expression": "`oee_pct`" }], "disaggregated": true }}],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": { "value": { "fieldName": "oee_pct", "displayName": "OEE %" }},
+              "frame": { "title": "OEE (90d)", "showTitle": true }
+            }
+          },
+          "position": { "x": 0, "y": 1, "width": 2, "height": 2 }
+        },
+        {
+          "widget": {
+            "name": "kpi_on_time",
+            "queries": [{ "name": "main_query", "query": { "datasetName": "kpi_snapshot", "fields": [{ "name": "on_time_pct", "expression": "`on_time_pct`" }], "disaggregated": true }}],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": { "value": { "fieldName": "on_time_pct", "displayName": "On-time %" }},
+              "frame": { "title": "On-time delivery (90d)", "showTitle": true }
+            }
+          },
+          "position": { "x": 2, "y": 1, "width": 2, "height": 2 }
+        },
+        {
+          "widget": {
+            "name": "kpi_margin",
+            "queries": [{ "name": "main_query", "query": { "datasetName": "kpi_snapshot", "fields": [{ "name": "margin_pct", "expression": "`margin_pct`" }], "disaggregated": true }}],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": { "value": { "fieldName": "margin_pct", "displayName": "Margin %" }},
+              "frame": { "title": "Operating margin (90d)", "showTitle": true }
+            }
+          },
+          "position": { "x": 4, "y": 1, "width": 2, "height": 2 }
+        },
+        {
+          "widget": {
+            "name": "kpi_late_risk",
+            "queries": [{ "name": "main_query", "query": { "datasetName": "kpi_snapshot", "fields": [{ "name": "late_prob", "expression": "`late_prob`" }], "disaggregated": true }}],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": { "value": { "fieldName": "late_prob", "displayName": "Avg late risk" }},
+              "frame": { "title": "Delivery risk (90d)", "showTitle": true }
+            }
+          },
+          "position": { "x": 6, "y": 1, "width": 2, "height": 2 }
+        },
+        {
+          "widget": {
+            "name": "oee_bar",
+            "queries": [{ "name": "main_query", "query": { "datasetName": "oee_by_plant", "fields": [
+              { "name": "plant_id", "expression": "`plant_id`" },
+              { "name": "oee_pct", "expression": "`oee_pct`" }
+            ], "disaggregated": true }}],
+            "spec": {
+              "version": 3,
+              "widgetType": "bar",
+              "encodings": {
+                "x": { "fieldName": "oee_pct", "displayName": "OEE %", "scale": { "type": "quantitative" }},
+                "y": { "fieldName": "plant_id", "displayName": "Plant", "scale": { "type": "categorical" }}
+              },
+              "frame": { "title": "OEE by Plant", "showTitle": true },
+              "interactions": {
+                "filterOnClick": { "type": "CROSS_FILTER", "columnName": "plant_id" }
+              }
+            }
+          },
+          "position": { "x": 0, "y": 3, "width": 4, "height": 3 }
+        },
+        {
+          "widget": {
+            "name": "on_time_bar",
+            "queries": [{ "name": "main_query", "query": { "datasetName": "on_time_by_plant", "fields": [
+              { "name": "plant_id", "expression": "`plant_id`" },
+              { "name": "on_time_pct", "expression": "`on_time_pct`" }
+            ], "disaggregated": true }}],
+            "spec": {
+              "version": 3,
+              "widgetType": "bar",
+              "encodings": {
+                "x": { "fieldName": "on_time_pct", "displayName": "On-time %", "scale": { "type": "quantitative" }},
+                "y": { "fieldName": "plant_id", "displayName": "Plant", "scale": { "type": "categorical" }}
+              },
+              "frame": { "title": "On-time % by Plant", "showTitle": true },
+              "interactions": { "filterOnClick": { "type": "CROSS_FILTER", "columnName": "plant_id" } }
+            }
+          },
+          "position": { "x": 4, "y": 3, "width": 4, "height": 3 }
+        },
+        {
+          "widget": {
+            "name": "margin_bar",
+            "queries": [{ "name": "main_query", "query": { "datasetName": "margin_by_plant", "fields": [
+              { "name": "plant_id", "expression": "`plant_id`" },
+              { "name": "margin_pct", "expression": "`margin_pct`" }
+            ], "disaggregated": true }}],
+            "spec": {
+              "version": 3,
+              "widgetType": "bar",
+              "encodings": {
+                "x": { "fieldName": "margin_pct", "displayName": "Margin %", "scale": { "type": "quantitative" }},
+                "y": { "fieldName": "plant_id", "displayName": "Plant", "scale": { "type": "categorical" }}
+              },
+              "frame": { "title": "Margin % by Plant", "showTitle": true },
+              "interactions": { "filterOnClick": { "type": "CROSS_FILTER", "columnName": "plant_id" } }
+            }
+          },
+          "position": { "x": 8, "y": 3, "width": 4, "height": 3 }
+        }
+      ],
+      "pageType": "PAGE_TYPE_CANVAS"
+    }
+  ],
+  "uiSettings": {
+    "theme": { "widgetHeaderAlignment": "ALIGNMENT_UNSPECIFIED" },
+    "applyModeEnabled": true,
+    "crossFilteringEnabled": true
+  }
+}

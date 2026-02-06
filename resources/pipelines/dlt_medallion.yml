@@ -1,0 +1,16 @@
+# DLT pipeline: bronze -> silver -> gold (pipelines/dlt_medallion.py)
+resources:
+  pipelines:
+    mfg_demo_dlt_medallion:
+      name: mfg_demo_dlt_medallion
+      configuration:
+        pipeline.catalog: "${var.catalog}"
+        pipeline.schema: "${var.schema}"
+      libraries:
+        - notebook:
+            path: ${workspace.file_path}/pipelines/dlt_medallion
+      clusters:
+        - label: default
+          num_workers: 1
+          node_type_id: "Standard_DS3_v2"
+          spark_version: "14.3.x-scala2.12"

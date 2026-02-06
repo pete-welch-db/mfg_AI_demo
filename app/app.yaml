@@ -1,0 +1,24 @@
+# Databricks App configuration. Set these before first deploy (e.g. via scripts/update_env_ids.sh).
+# Required for app runtime:
+# - DATABRICKS_HOST
+# - DATABRICKS_HTTP_PATH
+# - DATABRICKS_CATALOG
+# - DATABRICKS_SCHEMA
+# Post-deploy:
+# - GENIE_SPACE_ID (Operations Genie space)
+# - GENIE_PLANNING_SPACE_ID (Planning Genie space, for Supervisor)
+# Optional:
+# - DATABRICKS_TOKEN (for Genie API / SDK; use OAuth in Databricks App when unset)
+# - DASHBOARD_EMBED_URL
+# - USE_MOCK_DATA (default: false)
+# - SERVING_ENDPOINT_NAME (delivery-risk model endpoint for what-if)
+env:
+  DATABRICKS_HOST: ""
+  DATABRICKS_HTTP_PATH: ""
+  DATABRICKS_CATALOG: welch
+  DATABRICKS_SCHEMA: denso_ai
+  GENIE_SPACE_ID: ""
+  GENIE_PLANNING_SPACE_ID: ""
+  DASHBOARD_EMBED_URL: ""
+  USE_MOCK_DATA: "false"
+  SERVING_ENDPOINT_NAME: ""

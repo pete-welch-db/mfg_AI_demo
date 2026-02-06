@@ -137,6 +137,8 @@ celerybeat.pid
 # Environments
 .env
 .envrc
+.genie_space_id
+.genie_planning_space_id
 .venv
 env/
 venv/

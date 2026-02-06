@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 140 28" fill="none" aria-label="Databricks">
+  <!-- Delta mark (Databricks red #FF3621) -->
+  <path fill="#FF3621" d="M14 2L2 26h8l2.5-5 2.5 5h8L14 2z"/>
+  <!-- Wordmark -->
+  <text x="32" y="18" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="16" font-weight="600" fill="#1a1a1a">Databricks</text>
+</svg>
